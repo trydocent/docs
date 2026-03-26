@@ -1,0 +1,52 @@
+---
+title: "How money works in Docent"
+sidebarTitle: "How money works"
+description: "Docent makes funding and balances simpler, while keeping it clear where your funds and trades actually live."
+---
+
+Docent is non-custodial. The goal is to make funding and balances easier to use without turning money movement into a black box.
+
+## What this means in practice
+
+You can deposit USDC on Base, Arbitrum, and Hyperliquid, then use Docent to trade supported venues from the same app.
+
+Docent shows a simpler balance view, but your funds still live on the chain or venue where they are being used.
+
+## Deposit where it is easiest for you
+
+Docent supports deposits on:
+
+- Base
+- Arbitrum
+- Hyperliquid
+
+That gives you more than one path to fund your account before you trade.
+
+## Trade on the venue you choose
+
+Docent does not replace the trading venue. It helps you access the venue through a simpler app experience.
+
+- When you trade perpetuals or spot, funds used for those trades live on `Hyperliquid`
+- When you trade prediction markets, funds used for those trades live on `Polymarket`
+
+If you deposit directly to Hyperliquid, use the `HyperCore` chain.
+
+## See one balance without losing track
+
+Docent shows a single balance in the app even when funds are spread across supported chains and trading venues.
+
+That makes the product easier to use. It does not change where funds are actually held at a given moment.
+
+## Wallet infrastructure
+
+Docent uses `Privy` for wallet infrastructure and `OneBalance` for chain abstraction and routing.
+
+`Privy` powers the wallet layer and account experience. `OneBalance` helps Docent present one balance and move funds across supported chains and venues with less manual setup.
+
+## Keep control of your wallet
+
+You can export your wallet key from Docent. Keep it private. Never share it with anyone.
+
+<Warning>
+  Docent will never ask you to send your private key to support or to another user.
+</Warning>
