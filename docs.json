@@ -21,10 +21,8 @@
             "group": "Product",
             "pages": [
               "index",
-              "app-features",
-              "faq",
-              "how-fees-work",
-              "llm-integration"
+              "why-docent",
+              "faq"
             ]
           }
         ]
