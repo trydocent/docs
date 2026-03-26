@@ -1,0 +1,42 @@
+---
+title: "FAQ"
+sidebarTitle: "How money works"
+description: "Frequently asked questions."
+---
+
+## Where are private keys stored?
+
+Privy uses Trusted Execution Environments (TEEs) with distributed key sharding to protect your assets.
+
+- Keys are only stored as **encrypted shares distributed across separate security boundaries.**
+- Keys are only **temporarily reconstructed within trusted execution environments** when needed for specific operations, under the wallet owner’s control.
+
+Privy’s wallet infrastructure is designed so that the only place a full private key ever exists is inside a secure enclave. For more information, [see](https://docs.privy.io/security/overview).
+
+## How do I deposit?
+
+Docent supports depositing USDC on [Hyperliquid](https://hyperfoundation.org/), [Base](https://www.base.org/) and [Arbitrum](https://arbitrum.io/).
+
+## How do I withdraw?
+
+Within the Docent mobile app, you can use the Send feature to send USDC to your withdrawal address.
+
+## What fees are collected on trades?
+
+Docent charges a small fee of 0.05% on perpetual futures trades. There are no <Tooltip tip="Hyperliquid and Polymarket charge their own exchange fees.">additional</Tooltip> fees charged on spot or prediction market trades.
+
+## I deposited funds on the wrong network. Is recovery possible?
+
+Funds sent on an unsupported network are not credited. You may export your private key via account settings and attempt recovery through an external wallet at your own risk.
+
+## I sent funds to the wrong deposit address. Can they be recovered?
+
+Funds sent to an incorrect address cannot be recovered by us.
+
+## How can I export my private key?
+
+You can export your private key from within the mobile app. Keep it private. Never share it with anyone.
+
+<Danger>
+  Docent will never ask you to send your private key to support or to another user.
+</Danger>
