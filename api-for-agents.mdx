@@ -1,0 +1,81 @@
+---
+title: "API for agents"
+sidebarTitle: "API for agents"
+description: "Let your AI agents and bots trade through Docent programmatically."
+---
+
+Docent exposes a REST API that lets AI agents, trading bots, and developers execute trades on Hyperliquid and Polymarket without the mobile app. Each API account gets its own non-custodial wallet — your agent controls the trades, and you control the keys.
+
+## What you can do
+
+- **Trade perpetuals** on Hyperliquid with up to 40x leverage
+- **Trade spot tokens** like PURR and HFUN on Hyperliquid
+- **Trade prediction markets** on Polymarket (Yes/No outcomes)
+- **Check balances and positions** across all venues in a single call
+- **Move funds** between venues automatically — no manual bridging
+- **Run strategies** like DCA and conditional orders
+
+All of this through simple HTTP requests with an API key.
+
+## How it works
+
+<CardGroup cols={2}>
+  <Card title="Register" icon="key">
+    Create an account with an invite code. You get an API key and a funded wallet address.
+  </Card>
+
+  <Card title="Fund" icon="wallet">
+    Send USDC to your wallet on Arbitrum or Base. Docent handles the rest — no bridging needed.
+  </Card>
+
+  <Card title="Trade" icon="arrow-trend-up">
+    Place orders via the API. Docent auto-funds from your unified balance across venues.
+  </Card>
+
+  <Card title="Poll" icon="rotate">
+    Orders execute asynchronously. Poll the actions endpoint for completion status.
+  </Card>
+</CardGroup>
+
+## Unified balance
+
+Your API account has a single USD balance that spans all trading venues. When you place a trade, Docent automatically moves funds to the right venue before executing. You never have to think about which chain your USDC is on.
+
+| Venue | What it holds |
+| --- | --- |
+| EVM (Arbitrum/Base) | USDC deposits |
+| Hyperliquid Spot | Spot token balances + USDC |
+| Hyperliquid Perps | Perpetual margin + P&L |
+| Polymarket Safe | Prediction market collateral |
+
+## Non-custodial by default
+
+Every API account is backed by a dedicated [Privy](https://www.privy.io/) server wallet. Docent never has access to withdraw your funds to external addresses — the API only supports trading and venue-to-venue transfers.
+
+- Your wallet is created and managed by Privy's infrastructure
+- Private keys live in Privy's Trusted Execution Environments
+- API keys can be rotated or revoked at any time
+
+## Rate limits and permissions
+
+Each API key has scoped permissions (`read`, `trade`, `transfer`, `strategies`) and a rate limit tier.
+
+| Tier | Limit |
+| --- | --- |
+| Standard | 60 requests per minute |
+| Premium | 300 requests per minute |
+
+## Example: long BTC in four lines
+
+```bash
+curl -X POST https://your-deployment.convex.site/v1/orders/perp \
+  -H "Authorization: Bearer dk_live_..." \
+  -H "Content-Type: application/json" \
+  -d '{"symbol":"BTC","side":"long","size":"0.001","orderType":"market"}'
+```
+
+## Get started
+
+<Card title="API quickstart" icon="rocket" href="/api-reference/quickstart">
+  Register, fund your wallet, and place your first trade in under five minutes.
+</Card>

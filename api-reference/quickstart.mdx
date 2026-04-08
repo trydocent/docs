@@ -1,0 +1,106 @@
+---
+title: "Quickstart"
+sidebarTitle: "Quickstart"
+description: "Get trading in under five minutes."
+---
+
+## 1. Register
+
+Create an account with your invite code. This provisions a wallet and returns your API key.
+
+```bash
+curl -X POST https://your-deployment.convex.site/v1/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"label": "my-trading-bot", "inviteCode": "YOUR_CODE"}'
+```
+
+```json Response
+{
+  "apiKey": "dk_live_a1b2c3d4...",
+  "userId": "abc123",
+  "walletAddress": "0x1234...abcd",
+  "status": "provisioning"
+}
+```
+
+<Warning>
+  Save your API key now. It is only shown once and cannot be retrieved later.
+</Warning>
+
+## 2. Wait for onboarding
+
+Your Hyperliquid and Polymarket accounts are set up automatically. Poll until both are ready (usually 30-60 seconds).
+
+```bash
+curl https://your-deployment.convex.site/v1/auth/status \
+  -H "Authorization: Bearer dk_live_a1b2c3d4..."
+```
+
+```json Response
+{
+  "userId": "abc123",
+  "walletAddress": "0x1234...abcd",
+  "hyperliquid": { "ready": true, "status": "active" },
+  "polymarket": { "ready": true, "safeAddress": "0xSafe...", "status": "ready" }
+}
+```
+
+## 3. Fund your wallet
+
+Send USDC to your `walletAddress` on Arbitrum or Base. Docent uses [OneBalance](https://www.onebalance.io/) for chain abstraction — no bridging required.
+
+## 4. Check your balance
+
+```bash
+curl https://your-deployment.convex.site/v1/balances \
+  -H "Authorization: Bearer dk_live_a1b2c3d4..."
+```
+
+## 5. Place a trade
+
+```bash
+curl -X POST https://your-deployment.convex.site/v1/orders/perp \
+  -H "Authorization: Bearer dk_live_a1b2c3d4..." \
+  -H "Content-Type: application/json" \
+  -d '{
+    "symbol": "BTC",
+    "side": "long",
+    "size": "0.001",
+    "orderType": "market"
+  }'
+```
+
+```json Response
+{
+  "success": true,
+  "actionId": "action_123",
+  "workflowId": "wf_456"
+}
+```
+
+## 6. Poll for completion
+
+Orders execute asynchronously. Poll the actions endpoint until `status` is `completed` or `failed`.
+
+```bash
+curl https://your-deployment.convex.site/v1/actions \
+  -H "Authorization: Bearer dk_live_a1b2c3d4..."
+```
+
+```json Response
+[
+  {
+    "id": "action_123",
+    "venue": "hyperliquid_perp",
+    "status": "completed",
+    "summary": "API: long 0.001 BTC market"
+  }
+]
+```
+
+## Next steps
+
+- Browse the full [endpoint reference](/api-reference/endpoint/register) to see all available operations
+- Use `POST /v1/orders/polymarket` to trade prediction markets
+- Use `POST /v1/transfers` to move funds between venues
+- Use `POST /v1/auth/keys/rotate` to rotate your API key periodically

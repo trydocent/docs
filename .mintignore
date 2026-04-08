@@ -7,9 +7,12 @@ drafts/
 *.draft.mdx
 
 # Mintlify starter kit content excluded from the Docent customer docs
-quickstart.mdx
-development.mdx
+/quickstart.mdx
+/development.mdx
 essentials/
 ai-tools/
-api-reference/
+api-reference/endpoint/create.mdx
+api-reference/endpoint/get.mdx
+api-reference/endpoint/delete.mdx
+api-reference/endpoint/webhook.mdx
 snippets/
