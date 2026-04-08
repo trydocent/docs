@@ -10,7 +10,7 @@
   },
   "servers": [
     {
-      "url": "https://your-deployment.convex.site",
+      "url": "https://api.trydocent.com",
       "description": "Production"
     }
   ],
