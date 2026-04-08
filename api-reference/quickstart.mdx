@@ -9,7 +9,7 @@ description: "Get trading in under five minutes."
 Create an account with your invite code. This provisions a wallet and returns your API key.
 
 ```bash
-curl -X POST https://your-deployment.convex.site/v1/auth/register \
+curl -X POST https://api.trydocent.com/v1/auth/register \
   -H "Content-Type: application/json" \
   -d '{"label": "my-trading-bot", "inviteCode": "YOUR_CODE"}'
 ```
@@ -32,7 +32,7 @@ curl -X POST https://your-deployment.convex.site/v1/auth/register \
 Your Hyperliquid and Polymarket accounts are set up automatically. Poll until both are ready (usually 30-60 seconds).
 
 ```bash
-curl https://your-deployment.convex.site/v1/auth/status \
+curl https://api.trydocent.com/v1/auth/status \
   -H "Authorization: Bearer dk_live_a1b2c3d4..."
 ```
 
@@ -52,14 +52,14 @@ Send USDC to your `walletAddress` on Arbitrum or Base. Docent uses [OneBalance](
 ## 4. Check your balance
 
 ```bash
-curl https://your-deployment.convex.site/v1/balances \
+curl https://api.trydocent.com/v1/balances \
   -H "Authorization: Bearer dk_live_a1b2c3d4..."
 ```
 
 ## 5. Place a trade
 
 ```bash
-curl -X POST https://your-deployment.convex.site/v1/orders/perp \
+curl -X POST https://api.trydocent.com/v1/orders/perp \
   -H "Authorization: Bearer dk_live_a1b2c3d4..." \
   -H "Content-Type: application/json" \
   -d '{
@@ -83,7 +83,7 @@ curl -X POST https://your-deployment.convex.site/v1/orders/perp \
 Orders execute asynchronously. Poll the actions endpoint until `status` is `completed` or `failed`.
 
 ```bash
-curl https://your-deployment.convex.site/v1/actions \
+curl https://api.trydocent.com/v1/actions \
   -H "Authorization: Bearer dk_live_a1b2c3d4..."
 ```
 
