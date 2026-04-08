@@ -1,33 +1,84 @@
 ---
-title: 'Introduction'
-description: 'Example section for showcasing API endpoints'
+title: "API overview"
+sidebarTitle: "Overview"
+description: "Trade on Hyperliquid and Polymarket programmatically using API keys."
 ---
 
-<Note>
-  If you're not looking to build API reference documentation, you can delete
-  this section by removing the api-reference folder.
-</Note>
+The Docent API lets external AI agents and developers place trades, check balances, and manage strategies without the mobile app. Each API account gets its own non-custodial wallet powered by [Privy](https://www.privy.io/).
 
-## Welcome
+## Base URL
 
-There are two ways to build API documentation: [OpenAPI](https://mintlify.com/docs/api-playground/openapi/setup) and [MDX components](https://mintlify.com/docs/api-playground/mdx/configuration). For the starter kit, we are using the following OpenAPI specification.
-
-<Card
-  title="Plant Store Endpoints"
-  icon="leaf"
-  href="https://github.com/mintlify/starter/blob/main/api-reference/openapi.json"
->
-  View the OpenAPI specification file
-</Card>
+```
+https://your-deployment.convex.site
+```
 
 ## Authentication
 
-All API endpoints are authenticated using Bearer tokens and picked up from the specification file.
+All endpoints (except registration) require a Bearer token:
+
+```bash
+curl https://your-deployment.convex.site/v1/balances \
+  -H "Authorization: Bearer dk_live_a1b2c3d4..."
+```
+
+API keys use the `dk_live_` prefix. You receive your key exactly once during registration — store it securely.
+
+## Permissions
+
+Each API key has four permission scopes:
+
+| Permission | What it controls |
+| --- | --- |
+| `read` | Balances, positions, markets, actions, strategies |
+| `trade` | Place and cancel orders |
+| `transfer` | Move funds between venues |
+| `strategies` | Create and cancel DCA/conditional strategies |
+
+All permissions are enabled by default on new keys.
+
+## Rate limits
+
+| Tier | Limit |
+| --- | --- |
+| Standard | 60 requests/minute |
+| Premium | 300 requests/minute |
+
+When rate limited, the response includes a `Retry-After` header and `retryAfter` field (milliseconds).
+
+## How orders work
+
+Orders execute asynchronously via durable workflows:
+
+1. You call `POST /v1/orders/perp` (or `/spot`, `/polymarket`)
+2. Docent returns an `actionId` immediately
+3. The workflow auto-funds from your unified balance if needed
+4. Poll `GET /v1/actions` to check completion
+
+This means your order is guaranteed to execute or fail — even if there's a server restart mid-execution.
+
+## Error format
+
+All errors follow a consistent shape:
 
 ```json
-"security": [
-  {
-    "bearerAuth": []
-  }
-]
+{
+  "error": "Human-readable message",
+  "code": "MACHINE_CODE"
+}
 ```
+
+| Status | Code | Meaning |
+| --- | --- | --- |
+| 401 | `UNAUTHORIZED` | Missing or invalid API key |
+| 403 | `FORBIDDEN` | Key lacks required permission |
+| 429 | `RATE_LIMITED` | Too many requests |
+| 400 | `VALIDATION_ERROR` | Invalid request body |
+| 400 | `ORDER_FAILED` | Order validation failed |
+
+## Supported venues
+
+| Venue | What you can trade |
+| --- | --- |
+| **Hyperliquid** perpetuals | BTC, ETH, SOL, and 100+ assets with up to 40x leverage |
+| **Hyperliquid** spot | PURR, HFUN, and other Hyperliquid-native tokens |
+| **Polymarket** | Prediction markets (Yes/No outcomes) |

@@ -1,16 +1,17 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "OpenAPI Plant Store",
-    "description": "A sample API that uses a plant store as an example to demonstrate features in the OpenAPI specification",
-    "license": {
-      "name": "MIT"
-    },
-    "version": "1.0.0"
+    "title": "Docent API",
+    "description": "REST API for programmatic trading on Hyperliquid and Polymarket via Docent. Enables external AI agents and developers to execute trades, check balances, and manage strategies using API keys.",
+    "version": "1.0.0",
+    "contact": {
+      "email": "support@trydocent.com"
+    }
   },
   "servers": [
     {
-      "url": "http://sandbox.mintlify.com"
+      "url": "https://your-deployment.convex.site",
+      "description": "Production"
     }
   ],
   "security": [
@@ -18,73 +19,70 @@
       "bearerAuth": []
     }
   ],
+  "tags": [
+    {
+      "name": "Auth",
+      "description": "Registration, key management, and onboarding status"
+    },
+    {
+      "name": "Balances",
+      "description": "Unified balance across all trading venues"
+    },
+    {
+      "name": "Positions",
+      "description": "Open positions on Hyperliquid and Polymarket"
+    },
+    {
+      "name": "Markets",
+      "description": "Market metadata and search"
+    },
+    {
+      "name": "Orders",
+      "description": "Place orders on Hyperliquid perpetuals, spot, and Polymarket"
+    },
+    {
+      "name": "Transfers",
+      "description": "Move funds between trading venues"
+    },
+    {
+      "name": "Actions",
+      "description": "Poll workflow execution status"
+    },
+    {
+      "name": "Strategies",
+      "description": "List active DCA and conditional order strategies"
+    }
+  ],
   "paths": {
-    "/plants": {
-      "get": {
-        "description": "Returns all plants from the system that the user has access to",
-        "parameters": [
-          {
-            "name": "limit",
-            "in": "query",
-            "description": "The maximum number of results to return",
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Plant response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/Plant"
-                  }
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Unexpected error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          }
-        }
-      },
+    "/v1/auth/register": {
       "post": {
-        "description": "Creates a new plant in the store",
+        "tags": ["Auth"],
+        "summary": "Register a new API account",
+        "description": "Creates a new Docent account with a Privy server wallet, provisions trading infrastructure, and returns a one-time API key. The wallet address is funded separately.\n\nRequires a valid invite code. The API key is returned exactly once in the response — store it securely.",
+        "security": [],
         "requestBody": {
-          "description": "Plant to add to the store",
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/NewPlant"
+                "$ref": "#/components/schemas/RegisterRequest"
               }
             }
-          },
-          "required": true
+          }
         },
         "responses": {
-          "200": {
-            "description": "plant response",
+          "201": {
+            "description": "Account created. API key returned once.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Plant"
+                  "$ref": "#/components/schemas/RegisterResponse"
                 }
               }
             }
           },
           "400": {
-            "description": "unexpected error",
+            "description": "Invalid invite code or registration failed",
             "content": {
               "application/json": {
                 "schema": {
@@ -96,28 +94,230 @@
         }
       }
     },
-    "/plants/{id}": {
-      "delete": {
-        "description": "Deletes a single plant based on the ID supplied",
+    "/v1/auth/status": {
+      "get": {
+        "tags": ["Auth"],
+        "summary": "Check onboarding status",
+        "description": "Returns the provisioning status of your Hyperliquid and Polymarket accounts. Poll this after registration until both venues show `ready`.",
+        "responses": {
+          "200": {
+            "description": "Onboarding status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OnboardingStatus"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/auth/keys/rotate": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Rotate API key",
+        "description": "Generates a new API key and revokes the current one. The new key is returned exactly once. The old key stops working immediately.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RotateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "New API key",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RotateResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/auth/keys/revoke": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Revoke API key",
+        "description": "Permanently revokes the current API key. You will no longer be able to authenticate with this key.",
+        "responses": {
+          "200": {
+            "description": "Key revoked",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/balances": {
+      "get": {
+        "tags": ["Balances"],
+        "summary": "Get unified balance",
+        "description": "Returns your balance across all trading venues: EVM (Arbitrum/Base), Hyperliquid perpetuals, Hyperliquid spot, and Polymarket Safe. All values are in USD.",
+        "responses": {
+          "200": {
+            "description": "Unified balance across venues",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnifiedBalance"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/positions/perp": {
+      "get": {
+        "tags": ["Positions"],
+        "summary": "Get perpetual positions",
+        "description": "Returns open perpetual positions across all supported Hyperliquid DEXes (main + HIP-3).",
+        "responses": {
+          "200": {
+            "description": "Perpetual positions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PerpPositions"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/positions/polymarket": {
+      "get": {
+        "tags": ["Positions"],
+        "summary": "Get Polymarket positions",
+        "description": "Returns open prediction market positions on Polymarket.",
+        "responses": {
+          "200": {
+            "description": "Polymarket positions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PolymarketPositions"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/markets/perp": {
+      "get": {
+        "tags": ["Markets"],
+        "summary": "List perpetual markets",
+        "description": "Returns metadata for all available perpetual markets on Hyperliquid, including symbol, max leverage, and size decimals.",
+        "responses": {
+          "200": {
+            "description": "List of perpetual markets grouped by DEX",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PerpMarketGroup"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/markets/polymarket/search": {
+      "get": {
+        "tags": ["Markets"],
+        "summary": "Search prediction markets",
+        "description": "Full-text search across active Polymarket prediction markets.",
         "parameters": [
           {
-            "name": "id",
-            "in": "path",
-            "description": "ID of plant to delete",
+            "name": "q",
+            "in": "query",
             "required": true,
+            "description": "Search query",
+            "schema": {
+              "type": "string",
+              "example": "bitcoin"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "description": "Maximum results to return (default 20)",
             "schema": {
               "type": "integer",
-              "format": "int64"
+              "default": 20
             }
           }
         ],
         "responses": {
-          "204": {
-            "description": "Plant deleted",
-            "content": {}
+          "200": {
+            "description": "Matching markets",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PolymarketMarket"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/orders/perp": {
+      "post": {
+        "tags": ["Orders"],
+        "summary": "Place perpetual order",
+        "description": "Place a perpetual futures order on Hyperliquid. Supports market and limit orders with optional TP/SL. The order executes asynchronously via a durable workflow — poll `/v1/actions` to track status.\n\nDocent automatically funds the order from your unified balance if needed.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlacePerpOrderRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Order submitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderResponse"
+                }
+              }
+            }
           },
           "400": {
-            "description": "unexpected error",
+            "description": "Validation or execution error",
             "content": {
               "application/json": {
                 "schema": {
@@ -128,89 +328,660 @@
           }
         }
       }
-    }
-  },
-  "webhooks": {
-    "/plant/webhook": {
+    },
+    "/v1/orders/spot": {
       "post": {
-        "description": "Information about a new plant added to the store",
+        "tags": ["Orders"],
+        "summary": "Place spot order",
+        "description": "Place a spot order on Hyperliquid. Supports market and limit orders. Auto-funds from your unified balance.",
         "requestBody": {
-          "description": "Plant added to the store",
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/NewPlant"
+                "$ref": "#/components/schemas/PlaceSpotOrderRequest"
               }
             }
           }
         },
         "responses": {
+          "201": {
+            "description": "Order submitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation or execution error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/orders/polymarket": {
+      "post": {
+        "tags": ["Orders"],
+        "summary": "Place prediction market order",
+        "description": "Place an order on a Polymarket prediction market. Specify the market by `conditionId` and choose an outcome (Yes/No). Auto-funds from your unified balance.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlacePolymarketOrderRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Order submitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation or execution error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/transfers": {
+      "post": {
+        "tags": ["Transfers"],
+        "summary": "Transfer between venues",
+        "description": "Move USDC between your trading venues. Supports all venue-to-venue routes (EVM, Hyperliquid Spot, Hyperliquid Perps, Polymarket Safe). Transfers execute asynchronously.\n\n**Note:** External withdrawals to arbitrary addresses are not supported via the API.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TransferRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Transfer initiated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransferResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid route or amount",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/actions": {
+      "get": {
+        "tags": ["Actions"],
+        "summary": "List recent actions",
+        "description": "Returns your most recent workflow actions (orders, transfers). Use this to poll for order completion status.",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "description": "Maximum results (default 20)",
+            "schema": {
+              "type": "integer",
+              "default": 20
+            }
+          }
+        ],
+        "responses": {
           "200": {
-            "description": "Return a 200 status to indicate that the data was received successfully"
+            "description": "List of actions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Action"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/strategies": {
+      "get": {
+        "tags": ["Strategies"],
+        "summary": "List strategies",
+        "description": "Returns your active DCA and conditional order strategies.",
+        "responses": {
+          "200": {
+            "description": "List of strategies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Strategy"
+                  }
+                }
+              }
+            }
           }
         }
       }
     }
   },
   "components": {
-    "schemas": {
-      "Plant": {
-        "required": [
-          "name"
-        ],
-        "type": "object",
-        "properties": {
-          "name": {
-            "description": "The name of the plant",
-            "type": "string"
-          },
-          "tag": {
-            "description": "Tag to specify the type",
-            "type": "string"
-          }
-        }
-      },
-      "NewPlant": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/Plant"
-          },
-          {
-            "required": [
-              "id"
-            ],
-            "type": "object",
-            "properties": {
-              "id": {
-                "description": "Identification number of the plant",
-                "type": "integer",
-                "format": "int64"
-              }
-            }
-          }
-        ]
-      },
-      "Error": {
-        "required": [
-          "error",
-          "message"
-        ],
-        "type": "object",
-        "properties": {
-          "error": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "message": {
-            "type": "string"
-          }
-        }
-      }
-    },
     "securitySchemes": {
       "bearerAuth": {
         "type": "http",
-        "scheme": "bearer"
+        "scheme": "bearer",
+        "description": "API key in the format `dk_live_...`. Pass as `Authorization: Bearer dk_live_...`"
+      }
+    },
+    "schemas": {
+      "Error": {
+        "type": "object",
+        "required": ["error", "code"],
+        "properties": {
+          "error": {
+            "type": "string",
+            "description": "Human-readable error message"
+          },
+          "code": {
+            "type": "string",
+            "description": "Machine-readable error code",
+            "enum": ["UNAUTHORIZED", "FORBIDDEN", "RATE_LIMITED", "BAD_REQUEST", "VALIDATION_ERROR", "NOT_FOUND", "ORDER_FAILED", "TRANSFER_FAILED", "REGISTRATION_FAILED", "ROTATION_FAILED"]
+          },
+          "retryAfter": {
+            "type": "number",
+            "description": "Milliseconds until rate limit resets (only on 429)"
+          }
+        }
+      },
+      "RegisterRequest": {
+        "type": "object",
+        "required": ["label", "inviteCode"],
+        "properties": {
+          "label": {
+            "type": "string",
+            "description": "Human-readable name for your API key",
+            "example": "my-trading-bot",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "inviteCode": {
+            "type": "string",
+            "description": "Invite code for gated access",
+            "example": "ABC123"
+          }
+        }
+      },
+      "RegisterResponse": {
+        "type": "object",
+        "properties": {
+          "apiKey": {
+            "type": "string",
+            "description": "Your API key. Shown exactly once — store it securely.",
+            "example": "dk_live_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4"
+          },
+          "userId": {
+            "type": "string",
+            "description": "Your Docent user ID"
+          },
+          "walletAddress": {
+            "type": "string",
+            "description": "Your Ethereum wallet address (fund this to start trading)",
+            "example": "0x1234...abcd"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["provisioning"],
+            "description": "Account provisioning status. Poll `/v1/auth/status` until ready."
+          }
+        }
+      },
+      "OnboardingStatus": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string"
+          },
+          "walletAddress": {
+            "type": "string"
+          },
+          "username": {
+            "type": "string"
+          },
+          "hyperliquid": {
+            "type": "object",
+            "properties": {
+              "ready": {
+                "type": "boolean",
+                "description": "Whether Hyperliquid trading is ready"
+              },
+              "status": {
+                "type": "string",
+                "enum": ["not_created", "pending", "active", "revoked", "expired"]
+              }
+            }
+          },
+          "polymarket": {
+            "type": "object",
+            "properties": {
+              "ready": {
+                "type": "boolean",
+                "description": "Whether Polymarket trading is ready"
+              },
+              "safeAddress": {
+                "type": "string",
+                "nullable": true,
+                "description": "Your Polymarket Safe address"
+              },
+              "status": {
+                "type": "string",
+                "enum": ["not_created", "deploying_safe", "ready"]
+              }
+            }
+          }
+        }
+      },
+      "RotateRequest": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string",
+            "description": "Optional new label for the key",
+            "maxLength": 64
+          }
+        }
+      },
+      "RotateResponse": {
+        "type": "object",
+        "properties": {
+          "apiKey": {
+            "type": "string",
+            "description": "Your new API key. The old key is now revoked.",
+            "example": "dk_live_f6e5d4c3b2a1f6e5d4c3b2a1f6e5d4c3"
+          }
+        }
+      },
+      "UnifiedBalance": {
+        "type": "object",
+        "description": "Balance across all trading venues in USD",
+        "properties": {
+          "evm": {
+            "type": "object",
+            "properties": {
+              "value": { "type": "string" },
+              "available": { "type": "string" }
+            }
+          },
+          "hypercorePerps": {
+            "type": "object",
+            "properties": {
+              "value": { "type": "string" },
+              "available": { "type": "string" }
+            }
+          },
+          "hypercoreSpot": {
+            "type": "object",
+            "properties": {
+              "value": { "type": "string" },
+              "available": { "type": "string" }
+            }
+          },
+          "polymarketSafe": {
+            "type": "object",
+            "properties": {
+              "value": { "type": "string" },
+              "available": { "type": "string" }
+            }
+          },
+          "total": {
+            "type": "object",
+            "properties": {
+              "value": { "type": "string" },
+              "available": { "type": "string" }
+            }
+          }
+        }
+      },
+      "PerpPositions": {
+        "type": "object",
+        "properties": {
+          "user": {
+            "type": "string",
+            "description": "Wallet address"
+          },
+          "clearinghouseStates": {
+            "type": "array",
+            "description": "Positions grouped by DEX",
+            "items": {
+              "type": "object",
+              "properties": {
+                "dex": {
+                  "type": "string",
+                  "description": "DEX name (\"hyperliquid\" for main)"
+                },
+                "state": {
+                  "type": "object",
+                  "description": "Hyperliquid clearinghouse state"
+                }
+              }
+            }
+          }
+        }
+      },
+      "PolymarketPositions": {
+        "type": "object",
+        "properties": {
+          "safeAddress": {
+            "type": "string",
+            "nullable": true
+          },
+          "positions": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          }
+        }
+      },
+      "PerpMarketGroup": {
+        "type": "object",
+        "properties": {
+          "dex": {
+            "type": "string",
+            "description": "DEX name",
+            "example": "hyperliquid"
+          },
+          "assets": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "example": "BTC"
+                },
+                "szDecimals": {
+                  "type": "integer",
+                  "description": "Size decimal precision"
+                },
+                "maxLeverage": {
+                  "type": "integer",
+                  "example": 40
+                },
+                "isDelisted": {
+                  "type": "boolean"
+                }
+              }
+            }
+          },
+          "updatedAt": {
+            "type": "number",
+            "description": "Unix timestamp of last metadata refresh"
+          }
+        }
+      },
+      "PolymarketMarket": {
+        "type": "object",
+        "properties": {
+          "conditionId": {
+            "type": "string",
+            "description": "Unique market identifier"
+          },
+          "question": {
+            "type": "string",
+            "example": "Will Bitcoin reach $150k by end of 2026?"
+          },
+          "outcomes": {
+            "type": "array",
+            "items": { "type": "string" },
+            "example": ["Yes", "No"]
+          },
+          "outcomePrices": {
+            "type": "array",
+            "items": { "type": "number" },
+            "example": [0.65, 0.35]
+          },
+          "volume24h": { "type": "number" },
+          "liquidity": { "type": "number" },
+          "category": { "type": "string" },
+          "endDate": { "type": "string" }
+        }
+      },
+      "PlacePerpOrderRequest": {
+        "type": "object",
+        "required": ["symbol", "side", "size", "orderType"],
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "description": "Perpetual market symbol",
+            "example": "BTC"
+          },
+          "side": {
+            "type": "string",
+            "enum": ["long", "short"]
+          },
+          "size": {
+            "type": "string",
+            "description": "Order size in base units",
+            "example": "0.01"
+          },
+          "orderType": {
+            "type": "string",
+            "enum": ["market", "limit"]
+          },
+          "price": {
+            "type": "number",
+            "description": "Limit price (required for limit orders)",
+            "example": 100000
+          },
+          "reduceOnly": {
+            "type": "boolean",
+            "description": "Only reduce an existing position"
+          },
+          "takeProfitPrice": {
+            "type": "number",
+            "description": "Take-profit trigger price"
+          },
+          "stopLossPrice": {
+            "type": "number",
+            "description": "Stop-loss trigger price"
+          }
+        }
+      },
+      "PlaceSpotOrderRequest": {
+        "type": "object",
+        "required": ["symbol", "side", "amountUsd", "orderType"],
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "description": "Spot token symbol",
+            "example": "PURR"
+          },
+          "side": {
+            "type": "string",
+            "enum": ["BUY", "SELL"]
+          },
+          "amountUsd": {
+            "type": "number",
+            "description": "Amount in USD",
+            "example": 100
+          },
+          "orderType": {
+            "type": "string",
+            "enum": ["market", "limit"]
+          },
+          "limitPrice": {
+            "type": "number",
+            "description": "Limit price (required for limit orders)"
+          },
+          "maxSlippagePercent": {
+            "type": "number",
+            "description": "Max slippage percentage (default 1%)"
+          }
+        }
+      },
+      "PlacePolymarketOrderRequest": {
+        "type": "object",
+        "required": ["conditionId", "outcome", "side", "amount"],
+        "properties": {
+          "conditionId": {
+            "type": "string",
+            "description": "Polymarket market condition ID"
+          },
+          "outcome": {
+            "type": "string",
+            "enum": ["Yes", "No"],
+            "description": "Which outcome to trade"
+          },
+          "side": {
+            "type": "string",
+            "enum": ["BUY", "SELL"]
+          },
+          "amount": {
+            "type": "number",
+            "description": "Amount in USD",
+            "example": 50
+          },
+          "price": {
+            "type": "number",
+            "description": "Limit price between 0.01 and 0.99",
+            "minimum": 0.01,
+            "maximum": 0.99,
+            "example": 0.65
+          }
+        }
+      },
+      "OrderResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "actionId": {
+            "type": "string",
+            "description": "Action ID for polling status via `/v1/actions`"
+          },
+          "workflowId": {
+            "type": "string",
+            "description": "Internal workflow ID"
+          }
+        }
+      },
+      "TransferRequest": {
+        "type": "object",
+        "required": ["source", "destination", "amount"],
+        "properties": {
+          "source": {
+            "type": "string",
+            "enum": ["evm", "polymarket_safe", "hypercore_spot", "hypercore_perps"],
+            "description": "Source venue"
+          },
+          "destination": {
+            "type": "string",
+            "enum": ["evm", "polymarket_safe", "hypercore_spot", "hypercore_perps"],
+            "description": "Destination venue"
+          },
+          "amount": {
+            "type": "string",
+            "description": "USDC amount as string for precision",
+            "example": "100000000"
+          }
+        }
+      },
+      "TransferResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "transferId": {
+            "type": "string"
+          },
+          "workflowId": {
+            "type": "string"
+          }
+        }
+      },
+      "Action": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "workflowId": {
+            "type": "string"
+          },
+          "venue": {
+            "type": "string",
+            "enum": ["hyperliquid_perp", "hyperliquid_spot", "polymarket"]
+          },
+          "status": {
+            "type": "string",
+            "enum": ["pending", "running", "completed", "failed"]
+          },
+          "summary": {
+            "type": "string",
+            "example": "API: long 0.01 BTC market"
+          },
+          "createdAt": { "type": "number" },
+          "startedAt": { "type": "number" },
+          "completedAt": { "type": "number" },
+          "error": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "Strategy": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "type": { "type": "string" },
+          "status": { "type": "string" },
+          "trigger": { "type": "object" },
+          "order": { "type": "object" },
+          "metadata": { "type": "object" },
+          "createdAt": { "type": "number" },
+          "updatedAt": { "type": "number" }
+        }
       }
     }
   }

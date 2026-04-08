@@ -26,6 +26,63 @@
             ]
           }
         ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "Getting started",
+            "pages": [
+              "api-reference/introduction",
+              "api-reference/quickstart"
+            ]
+          },
+          {
+            "group": "Auth",
+            "pages": [
+              "api-reference/endpoint/register",
+              "api-reference/endpoint/onboarding-status",
+              "api-reference/endpoint/rotate-key",
+              "api-reference/endpoint/revoke-key"
+            ]
+          },
+          {
+            "group": "Balances & Positions",
+            "pages": [
+              "api-reference/endpoint/get-balances",
+              "api-reference/endpoint/get-perp-positions",
+              "api-reference/endpoint/get-polymarket-positions"
+            ]
+          },
+          {
+            "group": "Markets",
+            "pages": [
+              "api-reference/endpoint/list-perp-markets",
+              "api-reference/endpoint/search-polymarket"
+            ]
+          },
+          {
+            "group": "Orders",
+            "pages": [
+              "api-reference/endpoint/place-perp-order",
+              "api-reference/endpoint/place-spot-order",
+              "api-reference/endpoint/place-polymarket-order"
+            ]
+          },
+          {
+            "group": "Transfers",
+            "pages": [
+              "api-reference/endpoint/transfer"
+            ]
+          },
+          {
+            "group": "Actions & Strategies",
+            "pages": [
+              "api-reference/endpoint/list-actions",
+              "api-reference/endpoint/list-strategies"
+            ]
+          }
+        ]
       }
     ]
   },
