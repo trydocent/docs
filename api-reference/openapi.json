@@ -22,7 +22,7 @@
   "tags": [
     {
       "name": "Auth",
-      "description": "Registration, key management, and onboarding status"
+      "description": "Registration, key management, and auth status"
     },
     {
       "name": "Balances",
@@ -60,7 +60,7 @@
           "Auth"
         ],
         "summary": "Register a new API account",
-        "description": "Creates a new API agent with a dedicated Privy server wallet, starts Hyperliquid and Polymarket onboarding in the background, and returns a one-time API key. Store the API key securely.",
+        "description": "Creates a new API agent with a dedicated Privy server wallet, queues background onboarding, and returns a one-time API key. Use `GET /v1/auth/status` to fetch the wallet address after registration.",
         "security": [],
         "requestBody": {
           "required": true,
@@ -101,15 +101,15 @@
         "tags": [
           "Auth"
         ],
-        "summary": "Check onboarding status",
-        "description": "Returns onboarding status for the authenticated API agent and wallet. Poll this after registration until Hyperliquid and Polymarket show `ready`.",
+        "summary": "Get auth status",
+        "description": "Returns the authenticated API agent id and its public deposit addresses. Use this after registration to discover your wallet address.",
         "responses": {
           "200": {
-            "description": "Onboarding status",
+            "description": "Auth status",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/OnboardingStatus"
+                  "$ref": "#/components/schemas/AuthStatus"
                 }
               }
             }
@@ -681,9 +681,7 @@
         "type": "object",
         "required": [
           "agentId",
-          "apiKey",
-          "walletAddress",
-          "status"
+          "apiKey"
         ],
         "properties": {
           "agentId": {
@@ -694,92 +692,30 @@
             "type": "string",
             "description": "Your API key. Shown exactly once. Store it securely.",
             "example": "dk_live_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4"
-          },
-          "walletAddress": {
-            "type": "string",
-            "description": "Dedicated Ethereum wallet address for this API agent",
-            "example": "0x1234...abcd"
-          },
-          "status": {
-            "type": "string",
-            "enum": [
-              "created"
-            ],
-            "description": "Initial registration state. Poll `/v1/auth/status` for venue onboarding progress."
           }
         }
       },
-      "OnboardingStatus": {
+      "AuthStatus": {
         "type": "object",
         "required": [
           "agentId",
-          "walletId",
-          "walletAddress",
-          "name",
-          "hyperliquid",
-          "polymarket"
+          "addresses"
         ],
         "properties": {
           "agentId": {
-            "type": "string"
-          },
-          "walletId": {
-            "type": "string"
-          },
-          "walletAddress": {
-            "type": "string"
-          },
-          "name": {
             "type": "string",
-            "description": "Agent name set during registration"
+            "description": "Authenticated API agent ID"
           },
-          "hyperliquid": {
+          "addresses": {
             "type": "object",
             "required": [
-              "ready",
-              "status"
+              "ethereum"
             ],
             "properties": {
-              "ready": {
-                "type": "boolean",
-                "description": "Whether Hyperliquid trading is ready"
-              },
-              "status": {
+              "ethereum": {
                 "type": "string",
-                "enum": [
-                  "not_created",
-                  "pending",
-                  "active",
-                  "revoked",
-                  "expired"
-                ]
-              }
-            }
-          },
-          "polymarket": {
-            "type": "object",
-            "required": [
-              "ready",
-              "safeAddress",
-              "status"
-            ],
-            "properties": {
-              "ready": {
-                "type": "boolean",
-                "description": "Whether Polymarket trading is ready"
-              },
-              "safeAddress": {
-                "type": "string",
-                "nullable": true,
-                "description": "Polymarket Safe address for this API wallet"
-              },
-              "status": {
-                "type": "string",
-                "enum": [
-                  "not_created",
-                  "deploying_safe",
-                  "ready"
-                ]
+                "description": "Ethereum wallet address for funding and trading",
+                "example": "0x1234...abcd"
               }
             }
           }

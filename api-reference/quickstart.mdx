@@ -17,9 +17,7 @@ curl -X POST https://api.trydocent.com/v1/auth/register \
 ```json Response
 {
   "agentId": "jg7h0r7m7j6q6y4m2jv1v67jv17m9h3k",
-  "apiKey": "dk_live_a1b2c3d4...",
-  "walletAddress": "0x1234...abcd",
-  "status": "created"
+  "apiKey": "dk_live_a1b2c3d4..."
 }
 ```
 
@@ -27,9 +25,9 @@ curl -X POST https://api.trydocent.com/v1/auth/register \
   Save your API key now. It is only shown once and cannot be retrieved later.
 </Warning>
 
-## 2. Wait for onboarding
+## 2. Get your wallet address
 
-Hyperliquid and Polymarket are set up automatically. Poll until both venues are ready.
+Use auth status to fetch your deposit address after registration.
 
 ```bash
 curl https://api.trydocent.com/v1/auth/status \
@@ -39,21 +37,15 @@ curl https://api.trydocent.com/v1/auth/status \
 ```json Response
 {
   "agentId": "jg7h0r7m7j6q6y4m2jv1v67jv17m9h3k",
-  "walletId": "ks7s7l8h4h7k2m6n1q4c8w9x0z3r5t1y",
-  "walletAddress": "0x1234...abcd",
-  "name": "my-trading-bot",
-  "hyperliquid": { "ready": true, "status": "active" },
-  "polymarket": {
-    "ready": true,
-    "safeAddress": "0xSafe...",
-    "status": "ready"
+  "addresses": {
+    "ethereum": "0x1234...abcd"
   }
 }
 ```
 
 ## 3. Fund your wallet
 
-Send USDC to your `walletAddress` on Arbitrum or Base. Docent uses OneBalance to move funds between venues, so you do not need to bridge manually before you trade.
+Send USDC to `addresses.ethereum` on Arbitrum or Base. Docent uses OneBalance to move funds between venues, so you do not need to bridge manually before you trade.
 
 ## 4. Check your balance
 
