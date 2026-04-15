@@ -181,7 +181,7 @@
           "Balances"
         ],
         "summary": "Get balances",
-        "description": "Returns the authenticated wallet address, the Polymarket Safe address if deployed, and a unified balance snapshot. Venue `value` fields are USD valuations. Venue `available` fields are exact USDC 6-decimal base-unit strings.",
+        "description": "Returns a unified balance snapshot grouped by venue. Each venue includes the address used for funding or settlement when available. Venue `value` fields are USD valuations. Venue `available` fields are exact USDC 6-decimal base-unit strings.",
         "responses": {
           "200": {
             "description": "Unified balance snapshot",
@@ -807,9 +807,10 @@
       "PolymarketPositions": {
         "type": "object",
         "properties": {
-          "safeAddress": {
+          "address": {
             "type": "string",
-            "nullable": true
+            "nullable": true,
+            "description": "Polymarket Safe address used for these positions. `null` when the Safe is not provisioned yet."
           },
           "positions": {
             "type": "array",
@@ -1214,20 +1215,9 @@
       "BalancesResponse": {
         "type": "object",
         "required": [
-          "walletAddress",
-          "safeAddress",
           "balances"
         ],
         "properties": {
-          "walletAddress": {
-            "type": "string",
-            "description": "Authenticated API wallet address"
-          },
-          "safeAddress": {
-            "type": "string",
-            "nullable": true,
-            "description": "Polymarket Safe address if deployed"
-          },
           "balances": {
             "$ref": "#/components/schemas/UnifiedBalance"
           }
@@ -1236,10 +1226,16 @@
       "VenueBalance": {
         "type": "object",
         "required": [
+          "address",
           "value",
           "available"
         ],
         "properties": {
+          "address": {
+            "type": "string",
+            "nullable": true,
+            "description": "Venue address used for funding or settlement. `null` when the venue is not provisioned yet."
+          },
           "value": {
             "type": "number",
             "description": "Venue valuation in USD"

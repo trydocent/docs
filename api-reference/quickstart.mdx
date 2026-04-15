@@ -54,6 +54,32 @@ curl https://api.trydocent.com/v1/balances \
   -H "Authorization: Bearer dk_live_a1b2c3d4..."
 ```
 
+```json Response
+{
+  "balances": {
+    "evm": {
+      "address": "0x1234...abcd",
+      "value": 1.25,
+      "available": "1250000"
+    },
+    "hyperliquid": {
+      "address": "0x1234...abcd",
+      "value": 0,
+      "available": "0"
+    },
+    "polymarket": {
+      "address": null,
+      "value": 0,
+      "available": "0"
+    },
+    "totals": {
+      "value": 1.25,
+      "cash": 1.25
+    }
+  }
+}
+```
+
 ## 5. Place a trade
 
 ```bash
