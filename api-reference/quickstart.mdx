@@ -1,25 +1,25 @@
 ---
 title: "Quickstart"
 sidebarTitle: "Quickstart"
-description: "Get trading in under five minutes."
+description: "Create an API agent, fund its wallet, and place your first trade."
 ---
 
 ## 1. Register
 
-Create an account with your invite code. This provisions a wallet and returns your API key.
+Create an API agent. This provisions a dedicated Privy server wallet and returns your API key.
 
 ```bash
 curl -X POST https://api.trydocent.com/v1/auth/register \
   -H "Content-Type: application/json" \
-  -d '{"label": "my-trading-bot", "inviteCode": "YOUR_CODE"}'
+  -d '{"name": "my-trading-bot"}'
 ```
 
 ```json Response
 {
+  "agentId": "jg7h0r7m7j6q6y4m2jv1v67jv17m9h3k",
   "apiKey": "dk_live_a1b2c3d4...",
-  "userId": "abc123",
   "walletAddress": "0x1234...abcd",
-  "status": "provisioning"
+  "status": "created"
 }
 ```
 
@@ -29,7 +29,7 @@ curl -X POST https://api.trydocent.com/v1/auth/register \
 
 ## 2. Wait for onboarding
 
-Your Hyperliquid and Polymarket accounts are set up automatically. Poll until both are ready (usually 30-60 seconds).
+Hyperliquid and Polymarket are set up automatically. Poll until both venues are ready.
 
 ```bash
 curl https://api.trydocent.com/v1/auth/status \
@@ -38,16 +38,22 @@ curl https://api.trydocent.com/v1/auth/status \
 
 ```json Response
 {
-  "userId": "abc123",
+  "agentId": "jg7h0r7m7j6q6y4m2jv1v67jv17m9h3k",
+  "walletId": "ks7s7l8h4h7k2m6n1q4c8w9x0z3r5t1y",
   "walletAddress": "0x1234...abcd",
+  "name": "my-trading-bot",
   "hyperliquid": { "ready": true, "status": "active" },
-  "polymarket": { "ready": true, "safeAddress": "0xSafe...", "status": "ready" }
+  "polymarket": {
+    "ready": true,
+    "safeAddress": "0xSafe...",
+    "status": "ready"
+  }
 }
 ```
 
 ## 3. Fund your wallet
 
-Send USDC to your `walletAddress` on Arbitrum or Base. Docent uses [OneBalance](https://www.onebalance.io/) for chain abstraction — no bridging required.
+Send USDC to your `walletAddress` on Arbitrum or Base. Docent uses OneBalance to move funds between venues, so you do not need to bridge manually before you trade.
 
 ## 4. Check your balance
 
@@ -80,27 +86,32 @@ curl -X POST https://api.trydocent.com/v1/orders/perp \
 
 ## 6. Poll for completion
 
-Orders execute asynchronously. Poll the actions endpoint until `status` is `completed` or `failed`.
+Orders execute asynchronously. Poll the action until `status` is `completed` or `failed`.
 
 ```bash
-curl https://api.trydocent.com/v1/actions \
+curl "https://api.trydocent.com/v1/actions?actionId=action_123" \
   -H "Authorization: Bearer dk_live_a1b2c3d4..."
 ```
 
 ```json Response
-[
-  {
-    "id": "action_123",
-    "venue": "hyperliquid_perp",
-    "status": "completed",
-    "summary": "API: long 0.001 BTC market"
-  }
-]
+{
+  "id": "action_123",
+  "workflowId": "wf_456",
+  "venue": "hyperliquid_perp",
+  "status": "completed",
+  "summary": "API: long 0.001 BTC market",
+  "createdAt": 1744700000000,
+  "startedAt": 1744700000200,
+  "completedAt": 1744700004200,
+  "error": null
+}
 ```
+
+Use `GET /v1/transfers?transferId=...` the same way when you create a venue transfer.
 
 ## Next steps
 
-- Browse the full [endpoint reference](/api-reference/endpoint/register) to see all available operations
+- Browse the full [endpoint reference](/api-reference/endpoint/register)
 - Use `POST /v1/orders/polymarket` to trade prediction markets
 - Use `POST /v1/transfers` to move funds between venues
 - Use `POST /v1/auth/keys/rotate` to rotate your API key periodically

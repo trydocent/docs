@@ -1,4 +1,9 @@
 ---
-title: "List actions"
+title: "Get actions"
 openapi: "GET /v1/actions"
+description: "List recent actions or fetch one action by ID."
 ---
+
+Use `actionId` to fetch one action. Omit it to list recent actions.
+
+Use `limit` only when you are listing recent actions.

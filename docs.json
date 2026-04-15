@@ -73,7 +73,8 @@
           {
             "group": "Transfers",
             "pages": [
-              "api-reference/endpoint/transfer"
+              "api-reference/endpoint/transfer",
+              "api-reference/endpoint/get-transfer"
             ]
           },
           {

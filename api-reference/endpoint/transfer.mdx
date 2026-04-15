@@ -1,4 +1,11 @@
 ---
-title: "Transfer between venues"
+title: "Create transfer"
 openapi: "POST /v1/transfers"
+description: "Move USDC between Docent venues."
 ---
+
+Send `amount` as a USDC decimal string with up to 6 decimals, such as `"1.25"`.
+
+Cross-chain or cross-bucket transfers must be at least `$1.00`. Internal Hyperliquid spot-to-perpetuals transfers are exempt.
+
+Poll `GET /v1/transfers?transferId=...` to track status.

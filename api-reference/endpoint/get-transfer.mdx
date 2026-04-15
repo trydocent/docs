@@ -1,0 +1,9 @@
+---
+title: "Get transfer"
+openapi: "GET /v1/transfers"
+description: "Check the status of a transfer by ID."
+---
+
+Use this endpoint to poll a transfer after you create it with `POST /v1/transfers`.
+
+Pass the `transferId` query parameter from the create response. The response includes both `amount` as a decimal USDC string and `amountBaseUnits` as the exact 6-decimal base-unit string.

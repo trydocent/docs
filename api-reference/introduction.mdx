@@ -4,35 +4,35 @@ sidebarTitle: "Overview"
 description: "Trade on Hyperliquid and Polymarket programmatically using API keys."
 ---
 
-The Docent API lets external AI agents and developers place trades, check balances, and manage strategies without the mobile app. Each API account gets its own non-custodial wallet powered by [Privy](https://www.privy.io/).
+The Docent API lets you create API agents, fund a dedicated wallet, place trades, check balances, and move funds between Hyperliquid and Polymarket. Each API account gets its own non-custodial wallet powered by [Privy](https://www.privy.io/).
 
 ## Base URL
 
-```
+```text
 https://api.trydocent.com
 ```
 
 ## Authentication
 
-All endpoints (except registration) require a Bearer token:
+All endpoints except `POST /v1/auth/register` require a Bearer token.
 
 ```bash
 curl https://api.trydocent.com/v1/balances \
   -H "Authorization: Bearer dk_live_a1b2c3d4..."
 ```
 
-API keys use the `dk_live_` prefix. You receive your key exactly once during registration — store it securely.
+API keys use the `dk_live_` prefix. You receive your key exactly once during registration.
 
 ## Permissions
 
-Each API key has four permission scopes:
+Each API key has four permission scopes.
 
 | Permission | What it controls |
 | --- | --- |
-| `read` | Balances, positions, markets, actions, strategies |
-| `trade` | Place and cancel orders |
-| `transfer` | Move funds between venues |
-| `strategies` | Create and cancel DCA/conditional strategies |
+| `read` | Balances, positions, markets, actions, and transfer status |
+| `trade` | Order placement |
+| `transfer` | Venue-to-venue transfers |
+| `strategies` | Reserved for coming soon strategy endpoints |
 
 All permissions are enabled by default on new keys.
 
@@ -43,22 +43,22 @@ All permissions are enabled by default on new keys.
 | Standard | 60 requests/minute |
 | Premium | 300 requests/minute |
 
-When rate limited, the response includes a `Retry-After` header and `retryAfter` field (milliseconds).
+When rate limited, the response includes a `Retry-After` header in seconds and a `retryAfter` field in milliseconds.
 
-## How orders work
+## Asynchronous execution
 
-Orders execute asynchronously via durable workflows:
+Orders and transfers run through durable workflows.
 
-1. You call `POST /v1/orders/perp` (or `/spot`, `/polymarket`)
-2. Docent returns an `actionId` immediately
-3. The workflow auto-funds from your unified balance if needed
-4. Poll `GET /v1/actions` to check completion
+1. Call `POST /v1/orders/perp`, `POST /v1/orders/spot`, `POST /v1/orders/polymarket`, or `POST /v1/transfers`.
+2. Docent returns an `actionId` for orders or a `transferId` for transfers.
+3. The workflow handles funding and execution in the background.
+4. Poll `GET /v1/actions?actionId=...` for orders or `GET /v1/transfers?transferId=...` for transfers.
 
-This means your order is guaranteed to execute or fail — even if there's a server restart mid-execution.
+This is why a request can be accepted before the trade or transfer is finished.
 
 ## Error format
 
-All errors follow a consistent shape:
+All errors follow the same shape.
 
 ```json
 {
@@ -69,16 +69,23 @@ All errors follow a consistent shape:
 
 | Status | Code | Meaning |
 | --- | --- | --- |
-| 401 | `UNAUTHORIZED` | Missing or invalid API key |
-| 403 | `FORBIDDEN` | Key lacks required permission |
-| 429 | `RATE_LIMITED` | Too many requests |
+| 400 | `BAD_REQUEST` | Invalid query params or business-rule failure |
 | 400 | `VALIDATION_ERROR` | Invalid request body |
-| 400 | `ORDER_FAILED` | Order validation failed |
+| 400 | `ORDER_REJECTED` | Order could not be accepted |
+| 400 | `ORDER_FAILED` | Order request failed before execution |
+| 400 | `TRANSFER_FAILED` | Transfer request failed before execution |
+| 401 | `UNAUTHORIZED` | Missing, invalid, or expired API key |
+| 403 | `FORBIDDEN` | Key lacks the required permission |
+| 404 | `NOT_FOUND` | Requested action or transfer was not found |
+| 429 | `RATE_LIMITED` | Too many requests |
+| 501 | `NOT_IMPLEMENTED` | Endpoint exists but is not live yet |
 
 ## Supported venues
 
 | Venue | What you can trade |
 | --- | --- |
-| **Hyperliquid** perpetuals | BTC, ETH, SOL, and 100+ assets with up to 40x leverage |
-| **Hyperliquid** spot | PURR, HFUN, and other Hyperliquid-native tokens |
-| **Polymarket** | Prediction markets (Yes/No outcomes) |
+| **Hyperliquid** perpetuals | BTC, ETH, SOL, and other perpetual markets |
+| **Hyperliquid** spot | PURR, HFUN, and other Hyperliquid spot tokens |
+| **Polymarket** | Prediction markets with Yes/No outcomes |
+
+The API supports trading and venue-to-venue transfers. External withdrawals to arbitrary addresses are not supported.
